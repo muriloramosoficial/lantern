@@ -1,7 +1,7 @@
 {
   "name": "lantern-desktop",
   "productName": "Lantern",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Open-source desktop workbench for AI models. Bring your own provider, keep your keys local.",
   "license": "MIT",
   "author": {
@@ -57,14 +57,10 @@
     "node": ">=20"
   },
   "allowScripts": {
-    "electron": true,
-    "electron-builder": true
+    "electron@34.5.8": true
   },
   "devDependencies": {
     "electron": "^34.0.0",
     "electron-builder": "^25.1.8"
-  },
-  "allowScripts": {
-    "electron@34.5.8": true
   }
 }

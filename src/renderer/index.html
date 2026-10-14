@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -11,89 +11,144 @@
   </head>
   <body>
     <div class="app">
-      <header class="topbar">
-        <div class="brand">
-          <span class="brand-flame" aria-hidden="true"></span>
-          <div class="brand-text">
-            <strong>Lantern</strong>
-            <span class="badge" id="localBadge" title="No account, no telemetry, no license server">local only</span>
+      <!-- ─────────────────────────── title bar ─────────────────────────── -->
+      <header class="titlebar">
+        <div class="tb-group">
+          <button id="toggleSidebar" class="icon-btn" type="button" title="Toggle sidebar">
+            <span class="glyph">▤</span>
+          </button>
+          <div class="wordmark">
+            <span class="mark" aria-hidden="true"></span>
+            <span class="wordmark-text">Lantern</span>
           </div>
+          <button id="workspaceButton" class="chip-btn" type="button" title="Choose a workspace folder">
+            <span id="workspaceName">No workspace</span>
+          </button>
         </div>
 
-        <div class="topbar-actions">
-          <label class="field inline">
-            <span class="label">Provider</span>
-            <select id="providerSelect" aria-label="Active provider"></select>
+        <button id="paletteButton" class="command-trigger" type="button">
+          <span class="dim">Search tasks and commands</span>
+          <kbd>Ctrl K</kbd>
+        </button>
+
+        <div class="tb-group">
+          <span class="badge badge-muted" id="localBadge" title="No account, no telemetry, no license server">
+            local only
+          </span>
+          <label class="select-wrap" title="Active provider">
+            <select id="providerSelect" class="select" aria-label="Active provider"></select>
           </label>
-          <button id="themeToggle" class="btn ghost" type="button" title="Switch theme">◐</button>
-          <button id="openSettings" class="btn ghost" type="button">Settings</button>
+          <button id="themeToggle" class="icon-btn" type="button" title="Switch theme">◐</button>
+          <button id="openSettings" class="icon-btn" type="button" title="Providers and settings">⚙</button>
         </div>
       </header>
 
-      <main class="layout">
-        <aside class="sidebar">
-          <div class="panel-head">
-            <h2>Workspace</h2>
-            <button id="chooseWorkspace" class="btn tiny" type="button">Choose folder</button>
+      <!-- ────────────────────────────── body ────────────────────────────── -->
+      <div class="body">
+        <aside class="sidebar" id="sidebar">
+          <nav class="rail" aria-label="Sections">
+            <button class="rail-btn is-active" id="railTasks" type="button" title="Tasks">
+              <span class="glyph">◈</span>
+            </button>
+            <button class="rail-btn" id="railFiles" type="button" title="Files">
+              <span class="glyph">⌸</span>
+            </button>
+            <div class="rail-spacer"></div>
+            <button class="rail-btn" id="railAdd" type="button" title="New task">
+              <span class="glyph">＋</span>
+            </button>
+          </nav>
+
+          <div class="side-panel">
+            <section class="side-section" id="tasksPanel">
+              <header class="side-head">
+                <h2>Tasks</h2>
+                <button id="newTask" class="mini-btn" type="button">New</button>
+              </header>
+              <ul class="task-list" id="taskList"></ul>
+            </section>
+
+            <section class="side-section" id="filesPanel" hidden>
+              <header class="side-head">
+                <h2>Workspace</h2>
+                <button id="chooseWorkspace" class="mini-btn" type="button">Choose</button>
+              </header>
+              <p class="path-line" id="workspacePath">No folder selected.</p>
+              <div class="attach-line">
+                <span id="attachCount">0 files attached</span>
+                <button id="clearAttachments" class="link-btn" type="button">clear</button>
+              </div>
+              <div class="tree" id="tree" role="tree" aria-label="Workspace files"></div>
+              <p class="hint">Ticked files become context for the next message in the active task.</p>
+            </section>
           </div>
-          <p class="workspace-path" id="workspacePath">No folder selected.</p>
-          <div class="attach-summary">
-            <span id="attachCount">0 files attached</span>
-            <button id="clearAttachments" class="link" type="button">clear</button>
-          </div>
-          <div class="tree" id="tree" role="tree" aria-label="Workspace files"></div>
-          <p class="hint">Files you tick are sent as context with your next message. Nothing is uploaded anywhere else.</p>
         </aside>
 
-        <section class="chat">
-          <div class="messages" id="messages" aria-live="polite"></div>
-
-          <form class="composer" id="composer">
-            <textarea
-              id="prompt"
-              placeholder="Ask anything, or describe the change you want. Enter sends, Shift+Enter adds a line."
-              rows="4"
-            ></textarea>
-            <div class="composer-bar">
-              <label class="field inline checkbox">
-                <input type="checkbox" id="useSystemPrompt" />
-                <span>custom system prompt</span>
-              </label>
-              <textarea id="systemPrompt" class="system-prompt" rows="2" hidden placeholder="System prompt…"></textarea>
-              <div class="composer-buttons">
-                <button id="stopBtn" class="btn danger" type="button" hidden>Stop</button>
-                <button id="sendBtn" class="btn primary" type="submit">Send</button>
+        <main class="canvas">
+          <div class="empty-state welcome" id="emptyState">
+            <div class="empty-inner">
+              <span class="mark mark-lg" aria-hidden="true"></span>
+              <h1>Start a task</h1>
+              <p>
+                A task is a pane that keeps its own conversation, its own attached files and its own
+                streaming answers. Point it at any endpoint you have configured.
+              </p>
+              <div class="empty-actions">
+                <button id="startTask" class="btn btn-primary" type="button">New task</button>
+                <button id="emptySettings" class="btn" type="button">Configure provider</button>
               </div>
+              <ol class="empty-steps">
+                <li>Add an endpoint in <strong>Settings</strong> — hosted API or local server.</li>
+                <li>Pick a workspace folder and tick the files that matter.</li>
+                <li>Ask, and watch the answer stream into the task pane.</li>
+              </ol>
             </div>
-            <p class="status" id="status"></p>
-          </form>
-        </section>
-      </main>
+          </div>
 
-      <footer class="footer">
-        <span id="versionInfo">Lantern</span>
-        <span id="keyStorageInfo"></span>
+          <div class="tiles" id="tiles"></div>
+        </main>
+      </div>
+
+      <footer class="statusbar">
+        <span id="statusText" class="status-text"></span>
+        <span class="status-right">
+          <span id="keyStorageInfo"></span>
+          <span class="sep">·</span>
+          <span id="versionInfo">Lantern</span>
+        </span>
       </footer>
     </div>
 
+    <!-- ───────────────────────────── palette ───────────────────────────── -->
+    <div class="palette-scrim" id="paletteScrim" hidden></div>
+    <div class="palette" id="palette" role="dialog" aria-label="Command palette" hidden>
+      <div class="palette-input-row">
+        <span class="glyph dim">⌕</span>
+        <input id="paletteInput" type="text" placeholder="Search tasks or type a command…" autocomplete="off" />
+        <kbd>Esc</kbd>
+      </div>
+      <ul class="palette-list" id="paletteList"></ul>
+    </div>
+
+    <!-- ───────────────────────────── settings ──────────────────────────── -->
     <dialog id="settingsDialog" class="dialog">
       <form method="dialog" class="dialog-inner" id="settingsForm">
         <header class="dialog-head">
-          <h2>Providers</h2>
-          <button class="btn ghost" value="close" type="submit">Close</button>
+          <div>
+            <h2>Providers</h2>
+            <p class="dialog-sub">
+              Lantern ships with nothing configured and never looks for credentials belonging to other
+              applications. Add the endpoint you want to use.
+            </p>
+          </div>
+          <button class="btn" value="close" type="submit">Close</button>
         </header>
-
-        <p class="hint">
-          Lantern ships with no providers configured and never looks for credentials belonging to other
-          applications on this machine. Add the endpoint you want to use — a hosted API, a gateway, or a
-          local server.
-        </p>
 
         <div class="settings-grid">
           <section class="provider-list">
             <h3>Configured</h3>
             <ul id="providerList"></ul>
-            <button id="newProvider" class="btn" type="button">+ New provider</button>
+            <button id="newProvider" class="btn" type="button">New provider</button>
           </section>
 
           <section class="provider-form">
@@ -124,7 +179,7 @@
                 <span class="label">Model</span>
                 <span class="row">
                   <input id="fModel" type="text" spellcheck="false" placeholder="model-name" list="modelList" />
-                  <button id="fetchModels" class="btn tiny" type="button" title="Ask the endpoint for its model list">
+                  <button id="fetchModels" class="mini-btn" type="button" title="Ask the endpoint for its model list">
                     list
                   </button>
                 </span>
@@ -158,9 +213,9 @@
             </label>
 
             <div class="form-actions">
-              <button id="saveProvider" class="btn primary" type="button">Save provider</button>
+              <button id="saveProvider" class="btn btn-primary" type="button">Save provider</button>
               <button id="testProvider" class="btn" type="button">Test connection</button>
-              <button id="deleteProvider" class="btn danger" type="button" hidden>Delete</button>
+              <button id="deleteProvider" class="btn btn-danger" type="button" hidden>Delete</button>
             </div>
             <p class="status" id="providerStatus"></p>
           </section>

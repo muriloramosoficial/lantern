@@ -39,6 +39,8 @@ and the app makes no request of its own beyond the ones you trigger.
 
 | | |
 |---|---|
+| **Task workbench** | Every task is a pane with its own conversation, its own attached files and its own stream; keep up to four side by side and maximize the one you are using |
+| **Command palette** | `Ctrl+K` creates tasks, switches providers, toggles the theme and jumps between tasks without leaving the keyboard |
 | **Any endpoint** | Everything that speaks the OpenAI *chat completions* shape, plus the Anthropic Messages API and local servers (Ollama, LM Studio, llama.cpp, vLLM, …) |
 | **Keys stay home** | Stored in the app's own settings file and sealed with the OS keychain when available; they never leave the machine and are never shown again once saved |
 | **Context you control** | Pick a working folder and tick exactly which files are sent with the next message; large files are trimmed with a visible note |
@@ -86,6 +88,7 @@ cd lantern
 npm install
 npm start          # open the app
 npm test           # 27 core tests
+npm run smoke      # boots the real app hidden and asserts 25 end-to-end checks
 npm run verify     # syntax check + tests
 npm run dist       # build the .exe / AppImage / dmg
 ```
@@ -97,7 +100,8 @@ npm run dist       # build the .exe / AppImage / dmg
    Ollama, LM Studio, llama.cpp, vLLM…) and adjust the base URL.
 3. Type the model name and, if the service needs one, your API key.
 4. Click **Test connection**. If it answers, save it.
-5. Choose a **workspace folder**, tick the files that matter and start talking.
+5. Create a **task** (`Ctrl+N` or the **New** button), choose a **workspace folder**, tick the files
+   that matter and start talking. Each task keeps its own history.
 
 Per-provider setup notes live in [docs/providers.md](docs/providers.md).
 
@@ -121,7 +125,7 @@ src/main/       Electron main process: window, IPC, persistence
   secrets.js      local key store via safeStorage, explicit plain-text fallback
   workspace.js    file listing, safe reads, context assembly
 src/preload/    contextBridge — the only surface exposed to the UI
-src/renderer/   plain JavaScript UI (no framework, no bundler)
+src/renderer/   plain JavaScript workbench: rail, task list, tiles, palette (no framework, no bundler)
 bin/            npm CLI (installs and launches the app)
 scripts/        install.ps1, install.sh, icon generator, syntax check
 test/           provider, settings and workspace tests (node --test)

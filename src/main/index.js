@@ -10,8 +10,12 @@ const { createSecretBox } = require('./secrets');
 const providers = require('./providers');
 const workspace = require('./workspace');
 
-// `npm run smoke` boots the app hidden, against a temporary settings folder.
+// `npm run smoke` boots the app hidden against a throwaway profile, so it can
+// never read or write the real settings, keys or tasks.
 const SMOKE_MODE = process.argv.includes('--smoke');
+if (SMOKE_MODE) {
+  app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'lantern-smoke-')));
+}
 
 const DEFAULT_SYSTEM_PROMPT = [
   'You are Lantern, a focused coding assistant running on the user\'s own machine.',
@@ -245,10 +249,7 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     const secretBox = createSecretBox({ safeStorage });
-    const settingsDir = SMOKE_MODE
-      ? fs.mkdtempSync(path.join(os.tmpdir(), 'lantern-smoke-'))
-      : app.getPath('userData');
-    store = new SettingsStore({ dir: settingsDir, secretBox });
+    store = new SettingsStore({ dir: app.getPath('userData'), secretBox });
     store.load();
     logLine(`start version=${app.getVersion()} keyStorage=${secretBox.scheme}`);
 

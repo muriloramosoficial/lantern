@@ -40,6 +40,8 @@ você dispara.
 
 | | |
 |---|---|
+| **Bancada de tarefas** | Cada tarefa é um painel com a própria conversa, os próprios arquivos anexados e o próprio streaming; abra até quatro lado a lado, maximize a que está usando |
+| **Paleta de comandos** | `Ctrl+K` cria tarefa, troca de provider, alterna o tema e pula entre tarefas sem tirar a mão do teclado |
 | **Endpoint personalizável** | Qualquer serviço compatível com o formato *chat completions* da OpenAI, mais a API nativa de Messages da Anthropic e servidores locais (Ollama, LM Studio, llama.cpp, vLLM, …) |
 | **Chaves locais** | Guardadas no arquivo de configuração do app e seladas com o cofre do sistema operacional quando disponível; nunca saem da máquina e nunca aparecem na interface depois de salvas |
 | **Contexto sob controle** | Você escolhe a pasta de trabalho e marca exatamente quais arquivos entram na próxima mensagem; arquivos grandes são truncados com aviso |
@@ -87,6 +89,7 @@ cd lantern
 npm install
 npm start          # abre o aplicativo
 npm test           # 27 testes do núcleo
+npm run smoke      # sobe o app real escondido e confere 25 pontos de ponta a ponta
 npm run verify     # checagem de sintaxe + testes
 npm run dist       # gera o instalador .exe / AppImage / dmg
 ```
@@ -98,7 +101,8 @@ npm run dist       # gera o instalador .exe / AppImage / dmg
    Anthropic, Ollama, LM Studio, llama.cpp, vLLM…) e ajuste a URL base.
 3. Informe o modelo e, se o serviço exigir, a chave de API.
 4. Clique em **Test connection**. Se responder, salve.
-5. Escolha uma **pasta de trabalho**, marque os arquivos que servem de contexto e converse.
+5. Crie uma **tarefa** (`Ctrl+N` ou o botão **New**), escolha uma **pasta de trabalho**, marque os
+   arquivos que servem de contexto e converse. Cada tarefa mantém o seu próprio histórico.
 
 Detalhes de configuração por provedor estão em [docs/providers.md](docs/providers.md).
 
@@ -122,7 +126,7 @@ src/main/       processo principal do Electron: janela, IPC, persistência
   secrets.js      cofre local via safeStorage com fallback explícito em texto puro
   workspace.js    listagem de arquivos, leitura segura, montagem de contexto
 src/preload/    ponte contextBridge — única superfície exposta à interface
-src/renderer/   interface em JS puro (sem framework, sem bundler)
+src/renderer/   bancada em JS puro: rail, lista de tarefas, tiles, paleta (sem framework, sem bundler)
 bin/            CLI do npm (instala e abre o aplicativo)
 scripts/        install.ps1, install.sh, gerador de ícone, checagem de sintaxe
 test/           testes de providers, settings e workspace (node --test)
