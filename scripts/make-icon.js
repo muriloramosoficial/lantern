@@ -2,16 +2,20 @@
 'use strict';
 
 /**
- * Generates resources/icon.png and resources/icon.ico without any dependency.
- * A lantern flame drawn straight into an RGBA buffer, encoded as PNG by hand
- * (zlib is in Node) and wrapped into an ICO container for Windows builds.
+ * Generates resources/icon.png (512x512, for macOS and Linux) and
+ * resources/icon.ico (256x256 PNG-in-ICO, for Windows) without any dependency.
+ *
+ * macOS refuses app icons smaller than 512px, so the PNG is rendered at that
+ * size while the ICO keeps the Windows-friendly 256px canvas.
  */
 
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
 
-const SIZE = 256;
+const BASE = 256;
+const PNG_SIZE = 512;
+const ICO_SIZE = 256;
 const OUT_DIR = path.join(__dirname, '..', 'resources');
 
 /* --------------------------------------------------------------- drawing */
@@ -31,72 +35,75 @@ function blend(canvas, x, y, [r, g, b], alpha) {
   dst[index + 3] = Math.min(255, dst[index + 3] * (1 - a) + 255 * a);
 }
 
-function roundedRect(canvas, x0, y0, x1, y1, radius, color, alpha = 1) {
-  for (let y = Math.floor(y0); y < y1; y += 1) {
-    for (let x = Math.floor(x0); x < x1; x += 1) {
-      const dx = Math.max(x0 + radius - x, 0, x - (x1 - radius - 1));
-      const dy = Math.max(y0 + radius - y, 0, y - (y1 - radius - 1));
+function roundedRect(canvas, scale, x0, y0, x1, y1, radius, color, alpha = 1) {
+  const s = scale;
+  const [X0, Y0, X1, Y1, R] = [x0 * s, y0 * s, x1 * s, y1 * s, radius * s];
+  for (let y = Math.floor(Y0); y < Y1; y += 1) {
+    for (let x = Math.floor(X0); x < X1; x += 1) {
+      const dx = Math.max(X0 + R - x, 0, x - (X1 - R - 1));
+      const dy = Math.max(Y0 + R - y, 0, y - (Y1 - R - 1));
       const distance = Math.hypot(dx, dy);
-      if (distance <= radius) blend(canvas, x, y, color, alpha);
-      else if (distance <= radius + 1) blend(canvas, x, y, color, alpha * (radius + 1 - distance));
+      if (distance <= R) blend(canvas, x, y, color, alpha);
+      else if (distance <= R + 1) blend(canvas, x, y, color, alpha * (R + 1 - distance));
     }
   }
 }
 
-function radialGlow(canvas, cx, cy, radius, color, strength) {
+function radialGlow(canvas, scale, cx, cy, radius, color, strength) {
+  const [CX, CY, R] = [cx * scale, cy * scale, radius * scale];
   for (let y = 0; y < canvas.size; y += 1) {
     for (let x = 0; x < canvas.size; x += 1) {
-      const distance = Math.hypot(x - cx, y - cy);
-      if (distance > radius) continue;
-      const falloff = 1 - distance / radius;
+      const distance = Math.hypot(x - CX, y - CY);
+      if (distance > R) continue;
+      const falloff = 1 - distance / R;
       blend(canvas, x, y, color, falloff * falloff * strength);
     }
   }
 }
 
-function draw() {
-  const canvas = createCanvas(SIZE);
-  const cx = SIZE / 2;
+/** Draws the lantern mark into a square canvas of the requested size. */
+function draw(size) {
+  const scale = size / BASE;
+  const canvas = createCanvas(size);
+  const cx = BASE / 2;
+  const frame = [24, 27, 33];
 
-  // Outer glow behind the lantern.
-  radialGlow(canvas, cx, 140, 118, [245, 166, 35], 0.32);
-  radialGlow(canvas, cx, 138, 74, [255, 214, 130], 0.4);
+  radialGlow(canvas, scale, cx, 140, 118, [245, 166, 35], 0.32);
+  radialGlow(canvas, scale, cx, 138, 74, [255, 214, 130], 0.4);
 
-  // Frame: top cap, body and base.
-  roundedRect(canvas, 78, 62, 178, 84, 6, [24, 27, 33]);
-  roundedRect(canvas, 86, 84, 170, 196, 10, [24, 27, 33]);
+  roundedRect(canvas, scale, 78, 62, 178, 84, 6, frame);
+  roundedRect(canvas, scale, 86, 84, 170, 196, 10, frame);
 
-  // Glass with a vertical warm gradient.
   for (let y = 88; y < 192; y += 1) {
     const t = (y - 88) / (192 - 88);
-    const color = [
-      255 - 30 * t,
-      Math.round(196 - 60 * t),
-      Math.round(96 - 60 * t),
-    ];
-    roundedRect(canvas, 92, y, 164, y + 1, 0, color, 0.95);
+    const color = [255 - 30 * t, Math.round(196 - 60 * t), Math.round(96 - 60 * t)];
+    roundedRect(canvas, scale, 92, y, 164, y + 1, 0, color, 0.95);
   }
 
-  // Flame core.
   for (let y = 108; y < 176; y += 1) {
     const t = (y - 108) / 68;
     const width = Math.sin(Math.PI * Math.min(1, t * 1.15)) * 22 + 4;
-    for (let x = Math.round(cx - width / 2); x <= Math.round(cx + width / 2); x += 1) {
-      const edge = 1 - Math.abs(x - cx) / (width / 2 + 1);
-      blend(canvas, x, y, [255, 250, 232], Math.max(0, edge) * 0.55 * (1 - t * 0.35));
+    const left = Math.round((cx - width / 2) * scale);
+    const right = Math.round((cx + width / 2) * scale);
+    for (let x = left; x <= right; x += 1) {
+      const edge = 1 - Math.abs(x - cx * scale) / ((width / 2 + 1) * scale);
+      const rowTop = Math.round(y * scale);
+      const rowBottom = Math.round((y + 1) * scale);
+      for (let ry = rowTop; ry < rowBottom; ry += 1) {
+        blend(canvas, x, ry, [255, 250, 232], Math.max(0, edge) * 0.55 * (1 - t * 0.35));
+      }
     }
   }
-  radialGlow(canvas, cx, 142, 40, [255, 244, 214], 0.5);
+  radialGlow(canvas, scale, cx, 142, 40, [255, 244, 214], 0.5);
 
-  // Base plate and handle.
-  roundedRect(canvas, 88, 196, 168, 210, 5, [24, 27, 33]);
-  roundedRect(canvas, 116, 40, 140, 66, 4, [24, 27, 33]);
-  roundedRect(canvas, 108, 30, 148, 44, 8, [24, 27, 33]);
+  roundedRect(canvas, scale, 88, 196, 168, 210, 5, frame);
+  roundedRect(canvas, scale, 116, 40, 140, 66, 4, frame);
+  roundedRect(canvas, scale, 108, 30, 148, 44, 8, frame);
 
   return canvas.data;
 }
 
-/* ---------------------------------------------------------------- png */
+/* ------------------------------------------------------------------ png */
 
 const CRC_TABLE = (() => {
   const table = new Int32Array(256);
@@ -162,17 +169,17 @@ function encodeIco(pngBuffer, size) {
   entry.writeUInt16LE(1, 4); // planes
   entry.writeUInt16LE(32, 6); // bits per pixel
   entry.writeUInt32LE(pngBuffer.length, 8); // bytes in resource
-  entry.writeUInt32LE(6 + 16, 12);
+  entry.writeUInt32LE(6 + 16, 12); // image offset
 
   return Buffer.concat([header, entry, pngBuffer]);
 }
 
-const rgba = draw();
-const png = encodePng(rgba, SIZE);
+const png = encodePng(draw(PNG_SIZE), PNG_SIZE);
+const ico = encodeIco(encodePng(draw(ICO_SIZE), ICO_SIZE), ICO_SIZE);
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 fs.writeFileSync(path.join(OUT_DIR, 'icon.png'), png);
-fs.writeFileSync(path.join(OUT_DIR, 'icon.ico'), encodeIco(png, SIZE));
+fs.writeFileSync(path.join(OUT_DIR, 'icon.ico'), ico);
 
-console.log(`wrote resources/icon.png (${(png.length / 1024).toFixed(1)} kB)`);
-console.log(`wrote resources/icon.ico (${((png.length + 22) / 1024).toFixed(1)} kB)`);
+console.log(`wrote resources/icon.png (${PNG_SIZE}x${PNG_SIZE}, ${(png.length / 1024).toFixed(1)} kB)`);
+console.log(`wrote resources/icon.ico (${ICO_SIZE}x${ICO_SIZE}, ${(ico.length / 1024).toFixed(1)} kB)`);

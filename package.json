@@ -1,7 +1,7 @@
 {
   "name": "lantern-desktop",
   "productName": "Lantern",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Open-source desktop workbench for AI models. Bring your own provider, keep your keys local.",
   "license": "MIT",
   "author": {
