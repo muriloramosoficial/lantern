@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build output
+release/
+out/
+*.log
+
+# Local app data / secrets
+.env
+.env.*
+*.key
+lantern.config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/

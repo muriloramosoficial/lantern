@@ -1,0 +1,52 @@
+appId: com.lantern.desktop
+productName: Lantern
+copyright: Copyright © 2026 Murilo Ramos
+
+directories:
+  output: release
+  buildResources: resources
+
+files:
+  - src/**/*
+  - resources/**/*
+  - package.json
+
+win:
+  icon: resources/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: Lantern-Setup-${version}.${ext}
+  shortcutName: Lantern
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+portable:
+  artifactName: Lantern-Portable-${version}.${ext}
+
+linux:
+  icon: resources/icon.png
+  category: Development
+  target:
+    - AppImage
+    - deb
+  artifactName: Lantern-${version}.${ext}
+
+mac:
+  icon: resources/icon.png
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+  artifactName: Lantern-${version}.${ext}
+
+publish:
+  provider: github
+  owner: muriloramosoficial
+  repo: lantern

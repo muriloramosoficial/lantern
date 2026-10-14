@@ -1,0 +1,70 @@
+{
+  "name": "lantern-desktop",
+  "productName": "Lantern",
+  "version": "0.1.0",
+  "description": "Open-source desktop workbench for AI models. Bring your own provider, keep your keys local.",
+  "license": "MIT",
+  "author": {
+    "name": "Murilo Ramos",
+    "email": "murilorp@outlook.com"
+  },
+  "homepage": "https://github.com/muriloramosoficial/lantern#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muriloramosoficial/lantern.git"
+  },
+  "bugs": {
+    "url": "https://github.com/muriloramosoficial/lantern/issues"
+  },
+  "main": "src/main/index.js",
+  "bin": {
+    "lantern": "bin/lantern.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "resources",
+    "docs",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "node --test",
+    "smoke": "electron . --smoke",
+    "check": "node scripts/check-syntax.js",
+    "icon": "node scripts/make-icon.js",
+    "verify": "npm run check && npm test",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win nsis portable",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:mac": "electron-builder --mac dmg"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "desktop",
+    "electron",
+    "openai",
+    "anthropic",
+    "ollama",
+    "byok",
+    "open-source"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "allowScripts": {
+    "electron": true,
+    "electron-builder": true
+  },
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "allowScripts": {
+    "electron@34.5.8": true
+  }
+}

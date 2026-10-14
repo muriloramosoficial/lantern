@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'"
+    />
+    <title>Lantern</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-flame" aria-hidden="true"></span>
+          <div class="brand-text">
+            <strong>Lantern</strong>
+            <span class="badge" id="localBadge" title="No account, no telemetry, no license server">local only</span>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <label class="field inline">
+            <span class="label">Provider</span>
+            <select id="providerSelect" aria-label="Active provider"></select>
+          </label>
+          <button id="themeToggle" class="btn ghost" type="button" title="Switch theme">◐</button>
+          <button id="openSettings" class="btn ghost" type="button">Settings</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <div class="panel-head">
+            <h2>Workspace</h2>
+            <button id="chooseWorkspace" class="btn tiny" type="button">Choose folder</button>
+          </div>
+          <p class="workspace-path" id="workspacePath">No folder selected.</p>
+          <div class="attach-summary">
+            <span id="attachCount">0 files attached</span>
+            <button id="clearAttachments" class="link" type="button">clear</button>
+          </div>
+          <div class="tree" id="tree" role="tree" aria-label="Workspace files"></div>
+          <p class="hint">Files you tick are sent as context with your next message. Nothing is uploaded anywhere else.</p>
+        </aside>
+
+        <section class="chat">
+          <div class="messages" id="messages" aria-live="polite"></div>
+
+          <form class="composer" id="composer">
+            <textarea
+              id="prompt"
+              placeholder="Ask anything, or describe the change you want. Enter sends, Shift+Enter adds a line."
+              rows="4"
+            ></textarea>
+            <div class="composer-bar">
+              <label class="field inline checkbox">
+                <input type="checkbox" id="useSystemPrompt" />
+                <span>custom system prompt</span>
+              </label>
+              <textarea id="systemPrompt" class="system-prompt" rows="2" hidden placeholder="System prompt…"></textarea>
+              <div class="composer-buttons">
+                <button id="stopBtn" class="btn danger" type="button" hidden>Stop</button>
+                <button id="sendBtn" class="btn primary" type="submit">Send</button>
+              </div>
+            </div>
+            <p class="status" id="status"></p>
+          </form>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span id="versionInfo">Lantern</span>
+        <span id="keyStorageInfo"></span>
+      </footer>
+    </div>
+
+    <dialog id="settingsDialog" class="dialog">
+      <form method="dialog" class="dialog-inner" id="settingsForm">
+        <header class="dialog-head">
+          <h2>Providers</h2>
+          <button class="btn ghost" value="close" type="submit">Close</button>
+        </header>
+
+        <p class="hint">
+          Lantern ships with no providers configured and never looks for credentials belonging to other
+          applications on this machine. Add the endpoint you want to use — a hosted API, a gateway, or a
+          local server.
+        </p>
+
+        <div class="settings-grid">
+          <section class="provider-list">
+            <h3>Configured</h3>
+            <ul id="providerList"></ul>
+            <button id="newProvider" class="btn" type="button">+ New provider</button>
+          </section>
+
+          <section class="provider-form">
+            <h3 id="formTitle">New provider</h3>
+            <div class="grid-2">
+              <label class="field">
+                <span class="label">Display name</span>
+                <input id="fName" type="text" placeholder="My gateway" autocomplete="off" />
+              </label>
+              <label class="field">
+                <span class="label">Endpoint type</span>
+                <select id="fKind"></select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span class="label">Base URL</span>
+              <input id="fBaseUrl" type="text" spellcheck="false" placeholder="https://api.example.com/v1" />
+            </label>
+            <div class="presets" id="presets"></div>
+
+            <div class="grid-2">
+              <label class="field">
+                <span class="label">Request path</span>
+                <input id="fApiPath" type="text" spellcheck="false" placeholder="/chat/completions" />
+              </label>
+              <label class="field">
+                <span class="label">Model</span>
+                <span class="row">
+                  <input id="fModel" type="text" spellcheck="false" placeholder="model-name" list="modelList" />
+                  <button id="fetchModels" class="btn tiny" type="button" title="Ask the endpoint for its model list">
+                    list
+                  </button>
+                </span>
+                <datalist id="modelList"></datalist>
+              </label>
+            </div>
+
+            <label class="field">
+              <span class="label">API key <em id="keyHint">stored locally, encrypted with your OS keychain</em></span>
+              <input id="fApiKey" type="password" autocomplete="new-password" placeholder="leave empty for local servers" />
+            </label>
+
+            <div class="grid-3">
+              <label class="field">
+                <span class="label">Max tokens</span>
+                <input id="fMaxTokens" type="number" min="1" step="1" value="4096" />
+              </label>
+              <label class="field">
+                <span class="label">Temperature</span>
+                <input id="fTemperature" type="number" min="0" max="2" step="0.1" placeholder="default" />
+              </label>
+              <label class="field checkbox">
+                <input id="fStream" type="checkbox" checked />
+                <span>stream responses</span>
+              </label>
+            </div>
+
+            <label class="field">
+              <span class="label">Extra headers (JSON)</span>
+              <textarea id="fHeaders" rows="2" spellcheck="false" placeholder='{"HTTP-Referer": "https://example.com"}'></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button id="saveProvider" class="btn primary" type="button">Save provider</button>
+              <button id="testProvider" class="btn" type="button">Test connection</button>
+              <button id="deleteProvider" class="btn danger" type="button" hidden>Delete</button>
+            </div>
+            <p class="status" id="providerStatus"></p>
+          </section>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
